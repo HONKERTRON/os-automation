@@ -1,5 +1,6 @@
 import imaplib
 import email
+import smtplib
 
 def extract_body(payload):
     if isinstance(payload,str):
@@ -47,6 +48,14 @@ def get_list_email(self):
         list_mail.append(list_text)
         return list_mail
 
+
+def send_email(to_addr, body_text):
+    from_addr = "guap4636@yandex.ru"
+    smtpObj = smtplib.SMTP_SSL('smtp.yandex.ru:465')
+    smtpObj.login('guap4636@yandex.ru', '4636guap')
+    smtpObj.sendmail(from_addr, to_addr, body_text)
+    smtpObj.quit()
+
 #в body выводится текст сообщения
 #в From отправитель
 #conn = imaplib.IMAP4_SSL("imap.yandex.ru", 993)
@@ -73,3 +82,7 @@ def get_list_email(self):
 #    except:
 #        pass
 #    conn.logout()
+
+addr = "alexsoldat98@yandex.ru"
+body = "test message"
+send_email(addr, body)
