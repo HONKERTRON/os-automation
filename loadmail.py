@@ -8,6 +8,7 @@ def extract_body(payload):
         return '\n'.join([extract_body(part.get_payload()) for part in payload])
 
 #в body выводится текст сообщения
+#в From отправитель
 conn = imaplib.IMAP4_SSL("imap.yandex.ru", 993)
 conn.login("guap4636@yandex.ru", "4636guap")
 conn.select()
@@ -21,6 +22,8 @@ try:
                 payload=msg.get_payload()
                 body=extract_body(payload)
                 print(body)
+                From = msg['from']
+                print(From)
         #typ, response = conn.store(num, '+FLAGS', r'(\Seen)') пометка сообщения как прочитанного
 finally:
     try:
