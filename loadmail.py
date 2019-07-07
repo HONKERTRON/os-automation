@@ -7,6 +7,15 @@ def extract_body(payload):
     else:
         return '\n'.join([extract_body(part.get_payload()) for part in payload])
 
+def get_first_text_block(email_message_instance):
+    maintype = email_message_instance.get_content_maintype()
+    if maintype == 'multipart':
+        for part in email_message_instance.get_payload():
+            if part.get_content_maintype() == 'text':
+                return part.get_payload()
+    elif maintype == 'text':
+        return email_message_instance.get_payload()
+
 #в body выводится текст сообщения
 #в From отправитель
 conn = imaplib.IMAP4_SSL("imap.yandex.ru", 993)
@@ -24,6 +33,8 @@ try:
                 print(body)
                 From = msg['from']
                 print(From)
+                Text = get_first_text_block(msg)
+                print(Text)
         #typ, response = conn.store(num, '+FLAGS', r'(\Seen)') пометка сообщения как прочитанного
 finally:
     try:
