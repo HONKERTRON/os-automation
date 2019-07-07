@@ -7,7 +7,7 @@ def extract_body(payload):
     else:
         return '\n'.join([extract_body(part.get_payload()) for part in payload])
 
-def get_first_text_block(email_message_instance):
+def get_first_text_block(self, email_message_instance):
     maintype = email_message_instance.get_content_maintype()
     if maintype == 'multipart':
         for part in email_message_instance.get_payload():
@@ -16,7 +16,7 @@ def get_first_text_block(email_message_instance):
     elif maintype == 'text':
         return email_message_instance.get_payload()
 
-def get_list_email():
+def get_list_email(self):
     list_mail = []
     list_text = []
     list_from = []
