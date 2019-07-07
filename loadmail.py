@@ -1,6 +1,8 @@
 import imaplib
 import email
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 def extract_body(payload):
     if isinstance(payload,str):
@@ -50,11 +52,18 @@ def get_list_email(self):
 
 
 def send_email(to_addr, body_text):
-    from_addr = "guap4636@yandex.ru"
+    msg = MIMEMultipart()
+    msg['From'] = "guap4636@yandex.ru"
+    msg['To'] = to_addr
+    msg['Subject'] = "Тест"
+    msg.attach(MIMEText(body_text, 'plain'))
+
     smtpObj = smtplib.SMTP_SSL('smtp.yandex.ru:465')
     smtpObj.login('guap4636@yandex.ru', '4636guap')
-    smtpObj.sendmail(from_addr, to_addr, body_text)
+    text = msg.as_string()
+    smtpObj.sendmail("guap4636@yandex.ru", to_addr, text)
     smtpObj.quit()
+
 
 #в body выводится текст сообщения
 #в From отправитель
