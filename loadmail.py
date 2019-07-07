@@ -21,8 +21,7 @@ def get_first_text_block(self, email_message_instance):
 
 def get_list_email(self):
     list_mail = []
-    list_text = []
-    list_from = []
+    mail = []
     conn = imaplib.IMAP4_SSL("imap.yandex.ru", 993)
     conn.login("guap4636@yandex.ru", "4636guap")
     conn.select()
@@ -37,8 +36,8 @@ def get_list_email(self):
                     body = extract_body(payload)
                     From = msg['from']
                     Text = get_first_text_block(msg)
-                    list_text.append(Text)
-                    list_from.append(From)
+                    mail.append(Text)
+                    mail.append(From)
             typ, response = conn.store(num, '+FLAGS', r'(\Seen)') #пометка сообщения как прочитанного
     finally:
         try:
@@ -46,8 +45,7 @@ def get_list_email(self):
         except:
             pass
         conn.logout()
-        list_mail.append(list_from)
-        list_mail.append(list_text)
+        list_mail.append(mail)
         return list_mail
 
 
@@ -92,6 +90,6 @@ def send_email(to_addr, body_text):
 #        pass
 #    conn.logout()
 
-addr = "alexsoldat98@yandex.ru"
-body = "test message"
-send_email(addr, body)
+#addr = "alexsoldat98@yandex.ru"
+#body = "test message"
+#send_email(addr, body)
