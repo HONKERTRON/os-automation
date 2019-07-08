@@ -62,6 +62,21 @@ def send_email(to_addr, body_text):
     smtpObj.sendmail("guap4636@yandex.ru", to_addr, text)
     smtpObj.quit()
 
+#возвращает корректные данные из письма в виде для поиска mail_data[0] - вариант
+#mail_data[1] - группа mail_data[2] - ФИО все строчными буквами mail_data[3] - ник на GitHub
+def mail_processing (mail_str):
+    mail_str = mail_str.strip()
+    mail_str = mail_str.lower()
+    mail_content = mail_str.split(' ')
+    fio = mail_content[2] + mail_content[3] + mail_content[4]
+    mail_data = []
+    mail_data.append(mail_content[0])
+    mail_data.append(mail_content[1])
+    mail_data.append(fio)
+    mail_data.append(mail_content[5])
+    return mail_data
+
+
 
 #в body выводится текст сообщения
 #в From отправитель
