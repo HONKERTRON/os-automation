@@ -68,7 +68,7 @@ def mail_processing (mail_str):
     mail_str = mail_str.strip()
     mail_str = mail_str.lower()
     mail_content = mail_str.split(' ')
-    fio = mail_content[2] + mail_content[3] + mail_content[4]
+    fio = mail_content[2] + " " + mail_content[3] + " " + mail_content[4]
     mail_data = []
     mail_data.append(mail_content[0])
     mail_data.append(mail_content[1])
