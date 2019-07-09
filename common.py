@@ -260,6 +260,26 @@ def get_task2_id(log):
 
 
 #
+def get_successful_repos():
+    repos_2 = get_github_repos(org, 'os-task2')
+    for repo in repos_2:
+        
+
+    repos_3 = get_github_repos(org, 'os-task3')
+    for repo in repos_3:
+
+
+#
+check_task_t2(repo, task):
+    if get_task2_id(get_travis_log(repo)) == task:
+        return True
+    return False
+
+#
+check_task_a3(repo, task):
+    return True
+
+#
 def gsheet(solutions, debug=False):
     #
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -283,15 +303,17 @@ def gsheet(solutions, debug=False):
         if lab_id == 2:
             completion_date = get_successfull_build_info(repo).get("completed_at")
             is_empty = worksheet.cell(stud_row, 4+1).value.strip() == ''
+            correct_task = check_task_t2(repo, worksheet.cell(stud_row, 1).value.strip())
         elif lab_id == 3:
             completion_date = get_successfull_status_info(repo).get("updated_at")
             is_empty = worksheet.cell(stud_row, 7+1).value.strip() == ''
+            correct_task = check_task_a3(repo, worksheet.cell(stud_row, 1).value.strip())
         else:
             completion_date = None
             is_empty = False
+            correct_task = False
         if debug:
             print("{}: {}, {}".format(sol, completion_date, is_empty))
-        if completion_date and is_empty:
+        if completion_date and is_empty and correct_task:
             worksheet.update_cell(stud_row, 4+(lab_id-2)*3, repo)
             worksheet.update_cell(stud_row, 4+(lab_id-2)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
-    
