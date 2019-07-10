@@ -297,7 +297,7 @@ def gsheet(group_name):
         githubs = [x.lower() for x in worksheet.col_values(19)[2:]]
         b = False
         for g in githubs:
-            if gitug.startswith(g):
+            if github.startswith(g+'-'):
                 b = True
         if b:
             stud_row = names_list.index(github) + 3
