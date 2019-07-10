@@ -270,50 +270,39 @@ def get_successful_repos():
 
 
 #
-check_task_t2(repo, task):
+def check_task_t2(repo, task):
     if get_task2_id(get_travis_log(repo)) == task:
         return True
     return False
 
 #
-check_task_a3(repo, task):
+def check_task_a3(repo, task):
     return True
 
 #
-def gsheet(solutions, debug=False):
+def gsheet():
     #
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name(settings.gsheet_key_filename, scope)
     conn = gspread.authorize(creds)
+    repos = get_github_repos();
+    githubs = [x for x in worksheet.col_values(19)[2:]]
     #
-    for sol in solutions:
-        group_name = sol[0].strip()
-        stud_name = sol[1].lower().strip()
-        repo = sol[2].strip()
-        lab_id = int(repo.split('os-task')[1].split('-')[0])
-        try:
-            worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
-        except:
-            raise Exception("No group {}: {}".format(group_name, sol))
-        names_list = [x.lower() for x in worksheet.col_values(2)[2:]]
-        if stud_name in names_list:
-            stud_row = names_list.index(stud_name) + 3
-        else:
-            raise Exception("No student {}: {}".format(stud_name, sol))
-        if lab_id == 2:
-            completion_date = get_successfull_build_info(repo).get("completed_at")
-            is_empty = worksheet.cell(stud_row, 4+1).value.strip() == ''
-            correct_task = check_task_t2(repo, worksheet.cell(stud_row, 1).value.strip())
-        elif lab_id == 3:
-            completion_date = get_successfull_status_info(repo).get("updated_at")
-            is_empty = worksheet.cell(stud_row, 7+1).value.strip() == ''
-            correct_task = check_task_a3(repo, worksheet.cell(stud_row, 1).value.strip())
-        else:
-            completion_date = None
-            is_empty = False
-            correct_task = False
-        if debug:
-            print("{}: {}, {}".format(sol, completion_date, is_empty))
-        if completion_date and is_empty and correct_task:
-            worksheet.update_cell(stud_row, 4+(lab_id-2)*3, repo)
-            worksheet.update_cell(stud_row, 4+(lab_id-2)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
+    for github in githubs:
+        stud_row = githubs.index(github) + 3
+        repo_2 = 'os-task2-'+github
+        if repo_2 in repos and worksheet.cell(stud_row, 4+1).value.strip() == '':
+            completion_date = get_successfull_build_info(repo_2).get("completed_at")
+            correct_task = check_task_t2(repo_2, (int(worksheet.cell(stud_row, 1).value.strip())+5) % 20)
+            if completion_date and correct_task:
+                worksheet.update_cell(stud_row, 4, repo_2)
+                worksheet.update_cell(stud_row, 4+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
+
+        repo_3 = 'os-task3-'+github
+        if repo_3 in repos and worksheet.cell(stud_row, 7+1).value.strip() == '':
+            completion_date = get_successfull_status_info(repo_3).get("updated_at")
+            correct_task = check_task_a3(repo_3, (int(worksheet.cell(stud_row, 1).value.strip()+5) % 20))
+            if completion_date and correct_task:
+                worksheet.update_cell(stud_row, 4+(1)*3, repo_3)
+                worksheet.update_cell(stud_row, 4+(1)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())      
+    
