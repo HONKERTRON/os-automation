@@ -295,10 +295,14 @@ def gsheet(group_name):
         except:
             raise Exception("No group {}: {}".format(group_name, repo))
         githubs = [x.lower() for x in worksheet.col_values(19)[2:]]
-        if github in githubs:
+        b = False
+        for g in githubs:
+            if gitug.startswith(g):
+                b = True
+        if b:
             stud_row = names_list.index(github) + 3
         else:
-            raise Exception("No student {}: {}".format(stud_name, sol))
+            raise Exception("No github {}: {}".format(github, repo))
         if lab_id == 2:
             completion_date = get_successfull_build_info(repo).get("completed_at")
             is_empty = worksheet.cell(stud_row, 4+1).value.strip() == ''
