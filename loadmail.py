@@ -3,6 +3,11 @@ import email
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+import settings
+import time
+
 
 def extract_body(payload):
     if isinstance(payload,str):
@@ -53,7 +58,7 @@ def send_email(to_addr, body_text):
     msg = MIMEMultipart()
     msg['From'] = "guap4636@yandex.ru"
     msg['To'] = to_addr
-    msg['Subject'] = "Тест"
+    msg['Subject'] = "Операционные системы"
     msg.attach(MIMEText(body_text, 'plain'))
 
     smtpObj = smtplib.SMTP_SSL('smtp.yandex.ru:465')
@@ -76,7 +81,34 @@ def mail_processing (mail_str):
     mail_data.append(mail_content[5])
     return mail_data
 
-
+def add_to_gsheets(mail_list):
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(settings.gsheet_key_filename, scope)
+    conn = gspread.authorize(creds)
+    for mail in mail_list:
+        pr_mail = mail_processing(mail[0])
+        num_var = pr_mail[0]
+        group_name = pr_mail[1]
+        stud_fio = pr_mail[2]
+        git_name = pr_mail[3]
+        try :
+            worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
+            time.sleep(1)
+        except :
+            send_email(mail[1], "Неверно указана группа. Проверьте данные и отправьте повторно.")
+            raise Exception("No group {}: {}".format(group_name, mail))
+        names_list = [x.lower() for x in worksheet.col_values(2)[2:]]
+        time.sleep(1)
+        if stud_fio in names_list:
+            stud_row = names_list.index(stud_fio) + 3
+        else :
+            send_email(mail[1], "Неверно указано ФИО. Проверьте данные и отправьте повторно.")
+            raise Exception("No student {}: {}".format(stud_fio, mail))
+        if num_var != worksheet.cell(stud_row, 1).value.strip() :
+            send_email(mail[1], "Внимание ваш вариант "+worksheet.cell(stud_row, 1).value.strip())
+        is_empty = worksheet.cell(stud_row, 19).value.strip() == ''
+        if is_empty:
+            worksheet.update_cell(stud_row, 19, git_name)
 
 #в body выводится текст сообщения
 #в From отправитель
