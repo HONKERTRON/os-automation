@@ -280,24 +280,23 @@ check_task_a3(repo, task):
     return True
 
 #
-def gsheet(solutions, debug=False):
+def gsheet(group_name):
     #
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name(settings.gsheet_key_filename, scope)
     conn = gspread.authorize(creds)
+    repos = get_github_repos()
     #
-    for sol in solutions:
-        group_name = sol[0].strip()
-        stud_name = sol[1].lower().strip()
-        repo = sol[2].strip()
+    for repo in repos:
+        github = repo.split('os-task')[1].split('-')[1]
         lab_id = int(repo.split('os-task')[1].split('-')[0])
         try:
             worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
         except:
-            raise Exception("No group {}: {}".format(group_name, sol))
-        names_list = [x.lower() for x in worksheet.col_values(2)[2:]]
-        if stud_name in names_list:
-            stud_row = names_list.index(stud_name) + 3
+            raise Exception("No group {}: {}".format(group_name, repo))
+        githubs = [x.lower() for x in worksheet.col_values(19)[2:]]
+        if github in githubs:
+            stud_row = names_list.index(github) + 3
         else:
             raise Exception("No student {}: {}".format(stud_name, sol))
         if lab_id == 2:
