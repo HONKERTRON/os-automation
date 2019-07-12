@@ -2,7 +2,7 @@ import common
 import loadmail
 
 # get list of all GitHub repos for task No 3
-task3_repos = common.get_github_repo_names(settings.github_organization, 'os-task3')
+task3_repos = common.get_github_repo_names(common.settings.github_organization, 'os-task3')
 # save all repos that are connected to AppVeyour before we any new repos are added
 appveyour_repos = common.get_appveyor_project_repo_names()
 # add repos to AppVeyor if they are not already there and trigger build for the newly added repos
