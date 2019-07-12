@@ -11,8 +11,8 @@ appveyor_account = "username"
 travis_token = "1234567890abcdef" 
 
 # TODO: make sure this file exists and has a valid Google API private key
-gsheet_key_filename = "SUAI-OS-2019-ee72bf6e6075.json" 
-gspreadsheet_name = "Операционные системы 2019 весна"
+gsheet_key_filename = "os-test-e72c563cd031.json"
+gspreadsheet_name = "testtab"
 
 # номер лабораторной работы и количество вариантов
 os_assignment_tasks = {1: 12, 2: 20, 3: 20}
