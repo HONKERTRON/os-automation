@@ -5,10 +5,11 @@ import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 import settings
+import time
 
 
 # get repository list from github
-def get_github_repos(org, prefix=None, verbose=False):
+def get_github_repos(org = settings.github_organization, prefix=None, verbose=False):
     all_repos_list = []
     page_number = 1
     request_headers = {
@@ -140,7 +141,7 @@ def get_github_check_runs(repo):
         "Accept": "application/vnd.github.antiope-preview+json",
     }
     res = requests.get(
-        "https://api.github.com/repos/{}/commits/master/check-runs".format(repo), 
+        "https://api.github.com/repos/{}/commits/master/check-runs".format(repo['full_name']), 
         headers=check_runs_headers
     )
     if res.status_code != 200:
@@ -218,6 +219,34 @@ def get_travis_log(repo):
         raise Exception("Travis API reported an error while trying to get build log for job {} (build {} for repository '{}')! Message is '{}' ({}).".format(job_id, travis_build, repo, res.reason, res.status_code))
     return json.loads(res.content).get("content")
 
+#
+def get_appveyor_log(repo):
+    appveyor_build = get_successfull_status_info(repo).get("target_url").split('/')[-1]
+    print(appveyor_build)
+    if not appveyor_build:
+        return None
+
+    appveyor_headers = {
+        "User-Agent": "AppVeyorAddRepo/1.0",
+        "Authorization": "Bearer " + settings.appveyor_token,
+    }
+    res = requests.get(
+        "https://api.travis-ci.com/build/{}".format(appveyor_build), 
+        headers=appveyor_headers
+    )
+    if res.status_code != 200:
+        raise Exception("AppVeyor API reported an error while trying to get build info for build {} (repository '{}')! Message is '{}' ({}).".format(appveyor_build, repo, res.reason, res.status_code))
+    job_id = json.loads(res.content).get("jobs", [{}])[-1].get("id")
+    if job_id is None:
+        raise Exception("No valid job ID found for build {} (repository '{}').".format(appveyor_build, repo))
+    res = requests.get(
+        "https://https://ci.appveyor.com/api/buildjobs/{}/log".format(job_id), 
+        headers=appveyor_headers
+    )
+    if res.status_code != 200:
+        raise Exception("AppVeyor API reported an error while trying to get build log for job {} (build {} for repository '{}')! Message is '{}' ({}).".format(job_id, travis_build, repo, res.reason, res.status_code))
+    return json.loads(res.content).get("content")
+
 
 #
 def get_successfull_status_info(repo):
@@ -227,7 +256,7 @@ def get_successfull_status_info(repo):
         "Accept": "application/vnd.github.antiope-preview+json",
     }
     res = requests.get(
-        "https://api.github.com/repos/{}/commits/master/status".format(repo), 
+        "https://api.github.com/repos/{}/commits/master/status".format(repo['full_name']), 
         headers=status_headers
     )
     if res.status_code != 200:
@@ -256,28 +285,21 @@ def get_task2_id(log):
     if i < 0:
         return None
     i += len("Task") + 1
-    return int(log[i:i+2].strip())
-
-
-#
-def get_successful_repos():
-    repos_2 = get_github_repos(org, 'os-task2')
-    for repo in repos_2:
-        
-
-    repos_3 = get_github_repos(org, 'os-task3')
-    for repo in repos_3:
-
+    return int(log[i:i+2].strip().split(':')[0])
 
 #
-check_task_t2(repo, task):
-    if get_task2_id(get_travis_log(repo)) == task:
+def check_task_t2(repo, task):
+    task_num = (int(task) + 5) % 20
+    if int(get_task2_id(get_travis_log(repo))) == task_num:
         return True
     return False
 
 #
-check_task_a3(repo, task):
-    return True
+def check_task_a3(repo, task):
+    task_num = (int(task) + 5) % 20
+    if int(get_task2_id(get_appveyor_log(repo))) == task_num:
+        return True
+    return False
 
 #
 def gsheet(group_name):
@@ -286,37 +308,49 @@ def gsheet(group_name):
     creds = ServiceAccountCredentials.from_json_keyfile_name(settings.gsheet_key_filename, scope)
     conn = gspread.authorize(creds)
     repos = get_github_repos()
+    try:
+        worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
+        githubs = [x.lower() for x in worksheet.col_values(19)[2:]]
+        time.sleep(30)
+    except:
+        raise Exception("No group {}: {}".format(group_name, repo['name']))
     #
     for repo in repos:
-        github = repo.split('os-task')[1].split('-')[1]
-        lab_id = int(repo.split('os-task')[1].split('-')[0])
-        try:
-            worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
-        except:
-            raise Exception("No group {}: {}".format(group_name, repo))
-        githubs = [x.lower() for x in worksheet.col_values(19)[2:]]
+        lab_id = int(repo['name'].split('-task')[1].split('-')[0])
+        github = repo['name'].split('-task')[1].split('-', 1)[1]
         b = False
         for g in githubs:
-            if github.startswith(g+'-'):
+            if g != ''  and github.startswith(g):
+                github = g
                 b = True
-        if b:
-            stud_row = names_list.index(github) + 3
-        else:
-            raise Exception("No github {}: {}".format(github, repo))
-        if lab_id == 2:
-            completion_date = get_successfull_build_info(repo).get("completed_at")
-            is_empty = worksheet.cell(stud_row, 4+1).value.strip() == ''
-            correct_task = check_task_t2(repo, worksheet.cell(stud_row, 1).value.strip())
-        elif lab_id == 3:
-            completion_date = get_successfull_status_info(repo).get("updated_at")
-            is_empty = worksheet.cell(stud_row, 7+1).value.strip() == ''
-            correct_task = check_task_a3(repo, worksheet.cell(stud_row, 1).value.strip())
-        else:
-            completion_date = None
-            is_empty = False
-            correct_task = False
-        if debug:
-            print("{}: {}, {}".format(sol, completion_date, is_empty))
-        if completion_date and is_empty and correct_task:
-            worksheet.update_cell(stud_row, 4+(lab_id-2)*3, repo)
-            worksheet.update_cell(stud_row, 4+(lab_id-2)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
+        if b and (lab_id == 2 or lab_id == 3):
+            try:
+                worksheet = conn.open(settings.gspreadsheet_name).worksheet(group_name)
+                time.sleep(1)
+            except:
+                raise Exception("No group {}: {}".format(group_name, repo['name']))
+            stud_row = githubs.index(github) + 3
+            if lab_id == 2:
+                completion_date = get_successfull_build_info(repo).get("completed_at")
+                is_empty = worksheet.cell(stud_row, 4+1).value.strip() == ''
+                time.sleep(1)
+                correct_task = check_task_t2(repo, worksheet.cell(stud_row, 1).value.strip())
+                time.sleep(1)
+            elif lab_id == 3:
+                completion_date = get_successfull_status_info(repo).get("updated_at")
+                is_empty = worksheet.cell(stud_row, 7+1).value.strip() == ''
+                time.sleep(1)
+                correct_task = check_task_a3(repo, worksheet.cell(stud_row, 1).value.strip())
+                time.sleep(1)
+            else:
+                completion_date = None
+                is_empty = False
+                correct_task = False
+            if completion_date and is_empty and correct_task:
+                worksheet.update_cell(stud_row, 4+(lab_id-2)*3, repo["full_name"])
+                time.sleep(1)
+                worksheet.update_cell(stud_row, 4+(lab_id-2)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
+                time.sleep(1)
+
+
+gsheet('Z6431')
