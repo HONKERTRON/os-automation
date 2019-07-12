@@ -16,3 +16,5 @@ gspreadsheet_name = "testtab"
 
 # номер лабораторной работы и количество вариантов
 os_assignment_tasks = {1: 12, 2: 20, 3: 20}
+
+os_groups = {}
