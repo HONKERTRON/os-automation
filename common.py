@@ -222,7 +222,6 @@ def get_travis_log(repo):
 #
 def get_appveyor_log(repo):
     appveyor_build = get_successfull_status_info(repo).get("target_url").split('/')[-1]
-    print(appveyor_build)
     if not appveyor_build:
         return None
 
@@ -290,13 +289,18 @@ def get_task2_id(log):
 #
 def check_task_t2(repo, task):
     task_num = (int(task) + 5) % 20
+    if get_travis_log(repo) == None:
+        return False
     if int(get_task2_id(get_travis_log(repo))) == task_num:
         return True
     return False
 
 #
 def check_task_a3(repo, task):
+    return True
     task_num = (int(task) + 5) % 20
+    if get_appveyor_log(repo) == None:
+        return False
     if int(get_task2_id(get_appveyor_log(repo))) == task_num:
         return True
     return False
@@ -351,6 +355,3 @@ def gsheet(group_name):
                 time.sleep(1)
                 worksheet.update_cell(stud_row, 4+(lab_id-2)*3+1, datetime.datetime.strptime(completion_date, '%Y-%m-%dT%H:%M:%SZ').date().isoformat())
                 time.sleep(1)
-
-
-gsheet('Z6431')

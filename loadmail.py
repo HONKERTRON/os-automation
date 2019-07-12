@@ -131,8 +131,3 @@ def add_to_gsheets(mail_list):
             worksheet.update_cell(stud_row, 19, git_name)
             time.sleep(1)
 
-
-list_mail = []
-list_mail = get_list_email()
-add_to_gsheets(list_mail)
-
