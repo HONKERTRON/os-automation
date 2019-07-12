@@ -7,7 +7,7 @@ import gspread
 import settings
 import time
 
-
+#Из всех функций переписана кардинально только gsheet, в остальных лишь исправлен repo на repo['name'], чтобы работать с тем же набором данных
 # get repository list from github
 def get_github_repos(org = settings.github_organization, prefix=None, verbose=False):
     all_repos_list = []
@@ -219,7 +219,7 @@ def get_travis_log(repo):
         raise Exception("Travis API reported an error while trying to get build log for job {} (build {} for repository '{}')! Message is '{}' ({}).".format(job_id, travis_build, repo, res.reason, res.status_code))
     return json.loads(res.content).get("content")
 
-#
+#Аналог предыдущей функции, использует Эппвьёр рест апи, и требует ключ
 def get_appveyor_log(repo):
     appveyor_build = get_successfull_status_info(repo).get("target_url").split('/')[-1]
     if not appveyor_build:
@@ -286,7 +286,7 @@ def get_task2_id(log):
     i += len("Task") + 1
     return int(log[i:i+2].strip().split(':')[0])
 
-#
+#Проверяет вариант второй лабы, используя трэвис апи
 def check_task_t2(repo, task):
     task_num = (int(task) + 5) % 20
     if get_travis_log(repo) == None:
@@ -295,7 +295,7 @@ def check_task_t2(repo, task):
         return True
     return False
 
-#
+#Проверяет вариант третьей лабы, используя эппвьёр апи
 def check_task_a3(repo, task):
     return True
     task_num = (int(task) + 5) % 20
@@ -305,7 +305,7 @@ def check_task_a3(repo, task):
         return True
     return False
 
-#
+#Переписан так, что берет все репозитории, выбирает из них те, что есть на обрабатываемом листе, затем проверяет их на правильность и на наличие в документе
 def gsheet(group_name):
     #
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
